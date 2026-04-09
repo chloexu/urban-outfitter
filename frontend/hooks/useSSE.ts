@@ -25,7 +25,7 @@ export function useSSE() {
     setError(null);
 
     const url = sseUrl(sessionId, token);
-    const es = new EventSource(url);
+    const es = new EventSource(url) as any;
     esRef.current = es;
 
     es.addEventListener('progress', (e: any) => {
