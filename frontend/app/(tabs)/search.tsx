@@ -33,8 +33,8 @@ type ChatMsg = { role: 'assistant' | 'user'; text: string };
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
-  const { startSession, sendChat } = useSession();
-  const { results, progress, connect } = useSSE();
+  const { startSession, sendChat, closeSession } = useSession();
+  const { results, progress, done, connect } = useSSE();
 
   const [activeTab, setActiveTab] = useState<string>('chat');
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -66,6 +66,12 @@ export default function SearchScreen() {
     const defaults = profile.budget_defaults?.[key];
     if (defaults) setBudget({ min: defaults.min, max: defaults.max });
   }, [category, profile]);
+
+  useEffect(() => {
+    if (done && sessionId) {
+      closeSession(sessionId, 'completed');
+    }
+  }, [done, sessionId]);
 
   const handleChatSend = async (text: string) => {
     setMessages((m) => [...m, { role: 'user', text }]);
@@ -240,6 +246,7 @@ const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
     backgroundColor: Colors.surface,
+    borderRadius: 16,
     overflow: 'hidden',
   } as ViewStyle,
   filters: {

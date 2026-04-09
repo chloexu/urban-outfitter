@@ -12,7 +12,7 @@ export default function BudgetInput({ min, max, onChange }: Props) {
     <View style={styles.row}>
       <Text style={styles.prefix}>$</Text>
       <TextInput
-        testID="budget-input-field"
+        testID="budget-input-min"
         style={styles.input}
         value={String(min)}
         keyboardType="numeric"
@@ -21,7 +21,7 @@ export default function BudgetInput({ min, max, onChange }: Props) {
       <Text style={styles.sep}>to</Text>
       <Text style={styles.prefix}>$</Text>
       <TextInput
-        testID="budget-input-field"
+        testID="budget-input-max"
         style={styles.input}
         value={String(max)}
         keyboardType="numeric"

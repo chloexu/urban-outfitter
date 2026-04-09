@@ -49,8 +49,12 @@ export function useSSE() {
     });
 
     es.addEventListener('error', (e: any) => {
-      const data = JSON.parse(e.data ?? '{}');
-      setError(data.message ?? 'Stream error');
+      try {
+        const data = JSON.parse(e.data ?? '{}');
+        setError(data.message ?? 'Stream error');
+      } catch {
+        setError('Stream error');
+      }
       es.close();
     });
   }, []);
