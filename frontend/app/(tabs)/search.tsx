@@ -14,7 +14,7 @@ import BudgetInput from '../../components/BudgetInput';
 import AddTagInput from '../../components/AddTagInput';
 import PrimaryButton from '../../components/PrimaryButton';
 import { Colors, FontSize, Spacing } from '../../constants/tokens';
-import { COLOR_PRESETS } from '../../constants/colors';
+import { COLOR_PRESETS } from '../../constants/Colors';
 import { useProfile } from '../../hooks/useProfile';
 import { useSession } from '../../hooks/useSession';
 import { useSSE } from '../../hooks/useSSE';

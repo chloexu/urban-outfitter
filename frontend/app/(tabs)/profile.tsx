@@ -9,7 +9,7 @@ import PrimaryButton from '../../components/PrimaryButton';
 import CategoryBudgetCard from '../../components/CategoryBudgetCard';
 import AddTagInput from '../../components/AddTagInput';
 import { Colors, FontSize, Spacing } from '../../constants/tokens';
-import { COLOR_PRESETS } from '../../constants/colors';
+import { COLOR_PRESETS } from '../../constants/Colors';
 import { useProfile } from '../../hooks/useProfile';
 
 const BUDGET_CATEGORIES = ['Pants', 'Sweaters', 'Dresses', 'Accessories', 'Outerwear', 'Shoes'];
