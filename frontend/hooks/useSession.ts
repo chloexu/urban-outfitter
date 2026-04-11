@@ -38,17 +38,17 @@ export function useSession() {
     await apiPost(`/session/${id}/resume`);
   }, []);
 
-  const sendChat = useCallback(async (id: string, message: string): Promise<string> => {
-    const data = await apiPost<{ reply: string }>(`/session/${id}/chat`, { message });
-    return data.reply;
+  const sendChat = useCallback(async (id: string, message: string): Promise<{ reply?: string; resolved: boolean; inputs?: object }> => {
+    const data = await apiPost<{ reply?: string; resolved: boolean; inputs?: object }>(`/session/${id}/chat`, { message });
+    return data;
   }, []);
 
   const closeSession = useCallback(async (
     id: string,
-    outcome: string,
-    rating?: number
+    madePurchase = false,
+    rating = 3
   ): Promise<void> => {
-    await apiPost(`/session/${id}/close`, { outcome, rating });
+    await apiPost(`/session/${id}/close`, { made_purchase: madePurchase, rating });
   }, []);
 
   return { sessionId, loading, error, startSession, resumeSession, sendChat, closeSession };

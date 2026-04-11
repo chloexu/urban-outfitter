@@ -8,6 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from db import init_db
 from auth import create_token
+import models.profile  # noqa: F401
+import models.session  # noqa: F401
+import models.result   # noqa: F401
+import models.outcome  # noqa: F401
+import models.chat_message  # noqa: F401
 from routers.profile import router as profile_router
 from routers.session import router as session_router
 from routers.search import router as search_router

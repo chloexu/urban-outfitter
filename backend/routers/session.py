@@ -32,7 +32,10 @@ async def start_session(
 
     active = await get_active_session(profile.id, db)
     if active:
-        raise HTTPException(status_code=409, detail="A shopping session is already running.")
+        # Auto-close stale session instead of blocking
+        active.status = "closed"
+        active.closed_at = datetime.now(timezone.utc)
+        await db.commit()
 
     session = Session(
         profile_id=profile.id,
@@ -118,7 +121,10 @@ async def chat_turn(
         handler.history.append({"role": msg.role, "content": msg.content})
     handler.turn_index = len(handler.history)
 
-    result = await handler.send_message(body.message)
+    try:
+        result = await handler.send_message(body.message)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AI service error: {str(e)}")
 
     if isinstance(result, SessionInputs):
         # Chat resolved — update session inputs and signal ready to search

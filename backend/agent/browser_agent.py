@@ -1,6 +1,9 @@
+import logging
 from typing import AsyncGenerator
 from playwright.async_api import async_playwright
 from agent.retailers.base import RetailerAgent
+
+logger = logging.getLogger(__name__)
 from agent.retailers.club_monaco import ClubMonacoAgent
 from agent.retailers.lululemon import LululemonAgent
 from agent.retailers.max_mara_weekend import MaxMaraWeekendAgent
@@ -44,6 +47,7 @@ class BrowserAgent:
         avoided = self.profile.get("colors_avoided", [])
         batch_count = 0
 
+        logger.info("BrowserAgent starting | session=%s brands=%s inputs=%s", self.session_id, brands, self.inputs)
         pw = await async_playwright().start()
         browser = await pw.chromium.launch(headless=True)
         try:
@@ -52,8 +56,10 @@ class BrowserAgent:
             for i, brand in enumerate(brands[start_retailer_index:], start=start_retailer_index):
                 AgentClass = get_retailer_agent(brand, page)
                 if not AgentClass:
+                    logger.info("BrowserAgent skipping brand (no agent): %s", brand)
                     continue
 
+                logger.info("BrowserAgent searching brand: %s", brand)
                 yield {"type": "progress", "message": f"Searching {brand}..."}
                 agent = AgentClass(page=page)
 
@@ -87,8 +93,10 @@ class BrowserAgent:
                             return
 
                 except Exception as e:
+                    logger.error("BrowserAgent error for brand %s: %s", brand, e, exc_info=True)
                     yield {"type": "error", "message": str(e), "retailer": brand}
 
+            logger.info("BrowserAgent search_complete | session=%s total=%d", self.session_id, self.total_found)
             yield {"type": "search_complete", "total": self.total_found}
         finally:
             await browser.close()

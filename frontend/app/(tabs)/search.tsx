@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, FlatList, StyleSheet,
-  KeyboardAvoidingView, Platform, ViewStyle
+  KeyboardAvoidingView, Platform, ViewStyle, ActivityIndicator, Pressable, Linking
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SectionLabel from '../../components/SectionLabel';
@@ -34,12 +34,14 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const { startSession, sendChat, closeSession } = useSession();
-  const { results, progress, done, connect } = useSSE();
+  const { results, progress, done, error: sseError, connect } = useSSE();
 
+  const flatListRef = useRef<FlatList<ChatMsg>>(null);
   const [activeTab, setActiveTab] = useState<string>('chat');
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   // Filter form state
   const [category, setCategory] = useState('');
@@ -68,10 +70,32 @@ export default function SearchScreen() {
   }, [category, profile]);
 
   useEffect(() => {
-    if (done && sessionId) {
-      closeSession(sessionId, 'completed');
+    if (done) {
+      setSearching(false);
+      if (sessionId) closeSession(sessionId).catch(() => {});
+      if (results.length > 0) {
+        setMessages((m) => [...m, {
+          role: 'assistant',
+          text: `Found ${results.length} items from your brands! Here's what I found:`,
+        }]);
+      } else {
+        setMessages((m) => [...m, {
+          role: 'assistant',
+          text: "I couldn't find matching items from your saved brands right now. Try adjusting your filters.",
+        }]);
+      }
     }
-  }, [done, sessionId]);
+  }, [done]);
+
+  useEffect(() => {
+    if (sseError) {
+      setSearching(false);
+      setMessages((m) => [...m, {
+        role: 'assistant',
+        text: `Search failed: ${sseError}. Please try again.`,
+      }]);
+    }
+  }, [sseError]);
 
   const handleChatSend = async (text: string) => {
     setMessages((m) => [...m, { role: 'user', text }]);
@@ -82,10 +106,21 @@ export default function SearchScreen() {
         sid = await startSession({ mode: 'chat' });
         setSessionId(sid);
       }
-      if (sid) {
-        const reply = await sendChat(sid, text);
-        setMessages((m) => [...m, { role: 'assistant', text: reply }]);
+      if (!sid) {
+        setMessages((m) => [...m, { role: 'assistant', text: 'Sorry, could not start a session. Please try again.' }]);
+        return;
       }
+      const result = await sendChat(sid, text);
+      if (result.resolved) {
+        setMessages((m) => [...m, { role: 'assistant', text: "Got it! I have everything I need. Starting your search now..." }]);
+        setSearching(true);
+        const token = await getToken();
+        if (token) connect(sid, token);
+      } else if (result.reply) {
+        setMessages((m) => [...m, { role: 'assistant', text: result.reply! }]);
+      }
+    } catch (e) {
+      setMessages((m) => [...m, { role: 'assistant', text: `Error: ${String(e)}` }]);
     } finally {
       setChatLoading(false);
     }
@@ -134,10 +169,40 @@ export default function SearchScreen() {
       {activeTab === 'chat' ? (
         <View style={styles.chatContainer}>
           <FlatList
+            ref={flatListRef}
             data={messages}
             keyExtractor={(_, i) => String(i)}
             renderItem={({ item }) => <ChatBubble role={item.role} message={item.text} />}
             contentContainerStyle={{ padding: Spacing.s4 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            ListFooterComponent={
+              chatLoading ? (
+                <View style={styles.loadingBubble}>
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <Text style={styles.loadingText}>Thinking...</Text>
+                </View>
+              ) : searching ? (
+                <View style={styles.loadingBubble}>
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <Text style={styles.loadingText}>{progress ?? 'Searching your brands...'}</Text>
+                </View>
+              ) : done && results.length > 0 ? (
+                <View style={{ paddingTop: Spacing.s2 }}>
+                  {results.map((item, i) => (
+                    <Pressable
+                      key={i}
+                      style={styles.resultCard}
+                      onPress={() => Linking.openURL(item.product_url)}
+                    >
+                      <Text style={styles.resultBrand}>{item.retailer}</Text>
+                      <Text style={styles.resultName} numberOfLines={2}>{item.product_name}</Text>
+                      {item.price > 0 && <Text style={styles.resultPrice}>${item.price}</Text>}
+                      <Text style={styles.resultLink}>View →</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null
+            }
           />
           <ChatInput onSend={handleChatSend} disabled={chatLoading} />
         </View>
@@ -213,7 +278,21 @@ export default function SearchScreen() {
 
           {progress && <Text style={styles.progress}>{progress}</Text>}
           {results.length > 0 && (
-            <Text style={styles.resultsCount}>{results.length} items found</Text>
+            <Text style={styles.resultsCount}>{results.length} items found — check Chat tab</Text>
+          )}
+          {sseError && (
+            <View style={styles.feedbackBox}>
+              <Text style={styles.feedbackTitle}>Search failed</Text>
+              <Text style={styles.feedbackBody}>{sseError}</Text>
+            </View>
+          )}
+          {done && results.length === 0 && !sseError && (
+            <View style={styles.feedbackBox}>
+              <Text style={styles.feedbackTitle}>No results found</Text>
+              <Text style={styles.feedbackBody}>
+                We couldn't find matching items from your saved brands right now. Try adjusting your filters or check back later.
+              </Text>
+            </View>
           )}
 
           <PrimaryButton fullWidth onPress={handleStartSearching}>
@@ -258,4 +337,69 @@ const styles = StyleSheet.create({
   colorRow: { flexDirection: 'row', gap: Spacing.s2 } as ViewStyle,
   progress: { color: Colors.textSecondary, marginBottom: Spacing.s3, fontStyle: 'italic' },
   resultsCount: { color: Colors.primary, fontWeight: '600', marginBottom: Spacing.s3 },
+  resultCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: Spacing.s4,
+    marginBottom: Spacing.s3,
+  } as ViewStyle,
+  resultBrand: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  resultName: {
+    fontSize: FontSize.base,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  resultPrice: {
+    fontSize: FontSize.sm,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  resultLink: {
+    fontSize: FontSize.sm,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  feedbackBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: Spacing.s4,
+    marginBottom: Spacing.s4,
+  } as ViewStyle,
+  feedbackTitle: {
+    fontSize: FontSize.base,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.s2,
+  },
+  feedbackBody: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.s2,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderBottomLeftRadius: 4,
+    padding: Spacing.s3,
+    paddingHorizontal: Spacing.s4,
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.s2,
+  } as ViewStyle,
+  loadingText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
+  },
 });

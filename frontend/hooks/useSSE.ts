@@ -49,13 +49,19 @@ export function useSSE() {
     });
 
     es.addEventListener('error', (e: any) => {
-      try {
-        const data = JSON.parse(e.data ?? '{}');
-        setError(data.message ?? 'Stream error');
-      } catch {
-        setError('Stream error');
+      // e.data present = retailer-level error (non-fatal), stream continues
+      // e.data absent  = connection-level error (fatal), close stream
+      if (e.data) {
+        try {
+          const data = JSON.parse(e.data);
+          setProgress(`Skipped: ${data.retailer ?? 'unknown'} (${data.message ?? 'error'})`);
+        } catch {
+          // ignore malformed error data
+        }
+      } else {
+        setError('Connection lost');
+        es.close();
       }
-      es.close();
     });
   }, []);
 

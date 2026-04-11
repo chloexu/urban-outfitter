@@ -3,11 +3,13 @@ load_dotenv(override=False)
 
 import os
 import json
+import logging
 import anthropic
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.chat_message import ChatMessage
 from models.session import SessionInputs
 
+logger = logging.getLogger(__name__)
 anthropic_client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
 
 SYSTEM_PROMPT = """You are a personal shopping assistant. You help the user find clothing based on their profile and current needs.
@@ -49,14 +51,24 @@ class ChatHandler:
         await self._log("user", user_message)
         self.history.append({"role": "user", "content": user_message})
 
+        system = self._build_system()
+        logger.info(
+            "Anthropic request | session=%s turn=%d messages=%s",
+            self.session_id, self.turn_index, json.dumps(self.history)
+        )
+
         response = await anthropic_client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=512,
-            system=self._build_system(),
+            system=system,
             messages=self.history,
         )
 
         reply = response.content[0].text
+        logger.info(
+            "Anthropic response | session=%s turn=%d reply=%s",
+            self.session_id, self.turn_index, reply
+        )
         await self._log("assistant", reply)
         self.history.append({"role": "assistant", "content": reply})
 
