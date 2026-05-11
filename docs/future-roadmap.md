@@ -4,16 +4,22 @@ Ideas for future phases. Each phase should get its own design spec and implement
 
 ---
 
-## Phase A — Visual Results
+## Phase A — Post-Session Feedback Collection
 
-**Problem:** Results currently show product name + a link with no images or prices. `image_url` and `price` exist in the schema but come back empty from the Google agent. Clicking "View →" is a leap of faith — there's no way to evaluate an item without leaving the app.
+**Problem:** After results are returned, the session just ends silently. The `session_outcomes` table (with `rating`, `made_purchase`, `feedback`) already exists in the DB and the close-session API accepts this data — but the frontend never prompts for it. We have no signal on how well the assistant performed.
 
 **What to build:**
-- Real product images and prices surfaced in result cards
-- Options: scrape product page with Playwright to extract image/price after Google finds the URL; or use a product data API (e.g. SerpAPI Shopping, Rainforest API)
-- The result card UI already has `image_url` and `price` fields — backend just needs to populate them
+- After results finish streaming, show a feedback prompt in the chat:
+  - 5-star rating (1 = bad, 5 = extremely helpful)
+  - Yes/No: "Did you find what you were looking for?"
+- On submit, pass rating + made_purchase to the existing `POST /session/{id}/close` endpoint
+- If dismissed, close the session with no outcome recorded
+- Results feed directly into Phase B (profile learning from outcomes) when that is built
 
-**Why it matters:** Visual browsing is the whole experience. Without images, the results are barely more useful than a list of links.
+**Backend:** Already done — `CloseSessionRequest` accepts `rating` (int 1–5) and `made_purchase` (bool).
+**Frontend:** New inline feedback card component shown at end of search results.
+
+**Why it matters:** Without feedback, there's no way to measure whether the assistant is actually useful or getting better. This is the evaluation loop that makes the product improvable over time.
 
 ---
 
@@ -27,11 +33,27 @@ Ideas for future phases. Each phase should get its own design spec and implement
 - A lightweight Claude call: "given this outcome and item, what profile attributes should be strengthened or weakened?"
 - Profile update is proposed to the user for approval (HITL) before being written
 
+**Depends on:** Phase A (feedback collection).
+
 **Why it matters:** This is what makes it a *personal* assistant over time rather than a static filter. Without it, the profile is manually curated forever.
 
 ---
 
-## Phase C — Saved Items / Wishlist
+## Phase C — Session Detail / History Replay
+
+**Problem:** The History tab shows past sessions but tapping a row does nothing. Chat messages and result links are already stored in the DB (`chat_messages` and `results` tables) but never exposed.
+
+**What to build:**
+- `GET /history/{session_id}` backend endpoint returning chat messages (ordered by `turn_index`) + results for that session
+- New session detail screen in the frontend — navigate to it on row tap
+- Replay the chat conversation in the same chat bubble UI
+- Show result cards with links below, same as the search screen
+
+**Why it matters:** Users often want to revisit items they saw in a previous session. Without this, history is just a list of timestamps — not actionable.
+
+---
+
+## Phase D — Saved Items / Wishlist
 
 **Problem:** Results are ephemeral — if you close the app, items you saw but didn't buy are gone. The `results` table in the DB stores everything, but there's no save/bookmark concept exposed to the user.
 
@@ -46,7 +68,20 @@ Ideas for future phases. Each phase should get its own design spec and implement
 
 ---
 
-## Phase D — Expanded Color Picker
+## Phase E — Visual Results
+
+**Problem:** Results currently show product name + a link with no images or prices. `image_url` and `price` exist in the schema but come back empty from the Google agent. Clicking "View →" is a leap of faith — there's no way to evaluate an item without leaving the app.
+
+**What to build:**
+- Real product images and prices surfaced in result cards
+- Options: scrape product page with Playwright to extract image/price after Google finds the URL; or use a product data API (e.g. SerpAPI Shopping, Rainforest API)
+- The result card UI already has `image_url` and `price` fields — backend just needs to populate them
+
+**Why it matters:** Visual browsing is the whole experience. Without images, the results are barely more useful than a list of links.
+
+---
+
+## Phase F — Expanded Color Picker
 
 **Problem:** The color section in Profile only shows 6 preset swatches. Users can't express their full palette — common colors like dusty rose, burgundy, camel, cobalt, or olive are missing.
 
@@ -57,19 +92,5 @@ Ideas for future phases. Each phase should get its own design spec and implement
 - No external library needed — pure React Native `Modal`
 
 **Why it matters:** Color preference is one of the most powerful filters. A richer palette makes the profile more expressive and search results more accurate.
-
----
-
-## Phase E — Session Detail / History Replay
-
-**Problem:** The History tab shows past sessions but tapping a row does nothing. Chat messages and result links are already stored in the DB (`chat_messages` and `results` tables) but never exposed.
-
-**What to build:**
-- `GET /history/{session_id}` backend endpoint returning chat messages (ordered by `turn_index`) + results for that session
-- New session detail screen in the frontend — navigate to it on row tap
-- Replay the chat conversation in the same chat bubble UI
-- Show result cards with links below, same as the search screen
-
-**Why it matters:** Users often want to revisit items they saw in a previous session. Without this, history is just a list of timestamps — not actionable.
 
 ---
