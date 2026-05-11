@@ -157,13 +157,10 @@ export default function SearchScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.s5 }]}>
-        <Text style={styles.wordmark}>Urban{'\n'}Outfitter</Text>
-        <View style={styles.headerContent}>
-          <SectionLabel>SHOPPING SESSION</SectionLabel>
-          <Text style={styles.title}>Find Your Next Piece</Text>
-          <TabSwitcher tabs={TABS} activeKey={activeTab} onChange={setActiveTab} />
-        </View>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.s3 }]}>
+        <SectionLabel>SHOPPING SESSION</SectionLabel>
+        <Text style={styles.title}>Find Your Next Piece</Text>
+        <TabSwitcher tabs={TABS} activeKey={activeTab} onChange={setActiveTab} />
       </View>
 
       {activeTab === 'chat' ? (
@@ -192,7 +189,7 @@ export default function SearchScreen() {
                     <Pressable
                       key={i}
                       style={styles.resultCard}
-                      onPress={() => Linking.openURL(item.product_url)}
+                      onPress={() => Linking.openURL(item.product_url).catch(() => {})}
                     >
                       <Text style={styles.resultBrand}>{item.retailer}</Text>
                       <Text style={styles.resultName} numberOfLines={2}>{item.product_name}</Text>
@@ -307,20 +304,15 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.s6,
+    paddingBottom: Spacing.s3,
     backgroundColor: Colors.bg,
   } as ViewStyle,
-  headerContent: { marginTop: Spacing.s6, marginBottom: Spacing.s4 },
-  wordmark: {
-    fontFamily: 'Georgia',
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
   title: {
-    fontSize: FontSize.xl,
+    fontSize: FontSize.lg,
     fontWeight: '600',
     color: Colors.textPrimary,
-    marginBottom: Spacing.s4,
+    marginTop: Spacing.s1,
+    marginBottom: Spacing.s3,
   },
   chatContainer: {
     flex: 1,

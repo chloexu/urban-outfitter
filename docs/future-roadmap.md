@@ -45,3 +45,31 @@ Ideas for future phases. Each phase should get its own design spec and implement
 **Why it matters:** Shopping is rarely a single-session decision. Saves bridge the gap between "I saw this" and "I'm ready to buy."
 
 ---
+
+## Phase D — Expanded Color Picker
+
+**Problem:** The color section in Profile only shows 6 preset swatches. Users can't express their full palette — common colors like dusty rose, burgundy, camel, cobalt, or olive are missing.
+
+**What to build:**
+- Expand `COLOR_PRESETS` in `constants/Colors.ts` to ~20 curated fashion-relevant colors
+- Restore the `+` button on the Colors I Love / Colors to Avoid sections
+- Tapping `+` opens a modal grid of all presets as swatches; tap to add, tap again to remove
+- No external library needed — pure React Native `Modal`
+
+**Why it matters:** Color preference is one of the most powerful filters. A richer palette makes the profile more expressive and search results more accurate.
+
+---
+
+## Phase E — Session Detail / History Replay
+
+**Problem:** The History tab shows past sessions but tapping a row does nothing. Chat messages and result links are already stored in the DB (`chat_messages` and `results` tables) but never exposed.
+
+**What to build:**
+- `GET /history/{session_id}` backend endpoint returning chat messages (ordered by `turn_index`) + results for that session
+- New session detail screen in the frontend — navigate to it on row tap
+- Replay the chat conversation in the same chat bubble UI
+- Show result cards with links below, same as the search screen
+
+**Why it matters:** Users often want to revisit items they saw in a previous session. Without this, history is just a list of timestamps — not actionable.
+
+---

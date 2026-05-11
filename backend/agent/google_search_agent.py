@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import re
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from typing import AsyncGenerator
 from playwright.async_api import async_playwright
 
@@ -76,6 +76,10 @@ class GoogleSearchAgent:
                     for anchor in anchors:
                         href = await anchor.get_attribute("href") or ""
                         if not href.startswith("http"):
+                            continue
+                        # Only keep links from the brand's own domain
+                        domain = urlparse(href).netloc.lower()
+                        if brand_slug not in domain.replace("-", "").replace(".", ""):
                             continue
                         # Skip non-product pages
                         if re.search(r"/(cart|account|help|login|register|checkout)(/|$)", href):

@@ -8,7 +8,7 @@ import { apiGet } from '../../lib/api';
 type HistorySession = {
   id: string;
   mode: 'form' | 'chat';
-  created_at: string;
+  started_at: string;
   closed_at: string | null;
   result_count: number;
   outcome: string | null;
@@ -32,11 +32,10 @@ export default function HistoryScreen() {
       style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s5, paddingBottom: insets.bottom + Spacing.s8 }]}
     >
-      <Text style={styles.wordmark}>Urban{'\n'}Outfitter</Text>
-
       <View style={styles.intro}>
         <SectionLabel>HISTORY</SectionLabel>
         <Text style={styles.title}>Past Sessions</Text>
+        <Text style={styles.subtitle}>Your recent shopping sessions and results.</Text>
       </View>
 
       {loading && <Text style={styles.empty}>Loading...</Text>}
@@ -48,7 +47,7 @@ export default function HistoryScreen() {
           <View style={styles.cardRow}>
             <Text style={styles.cardMode}>{s.mode === 'chat' ? 'Chat' : 'Filters'}</Text>
             <Text style={styles.cardDate}>
-              {new Date(s.created_at).toLocaleDateString()}
+              {new Date(s.started_at).toLocaleDateString()}
             </Text>
           </View>
           <Text style={styles.cardResults}>{s.result_count} items found</Text>
@@ -62,9 +61,9 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   scroll: { backgroundColor: Colors.bg },
   content: { paddingHorizontal: Spacing.s6 },
-  wordmark: { fontFamily: 'Georgia', fontSize: FontSize.xl, fontWeight: '700', color: Colors.textPrimary },
-  intro: { marginTop: Spacing.s6, marginBottom: Spacing.s6 },
-  title: { fontSize: FontSize.xl, fontWeight: '600', color: Colors.textPrimary },
+  intro: { marginBottom: Spacing.s4 },
+  title: { fontSize: FontSize.lg, fontWeight: '600', color: Colors.textPrimary, marginTop: Spacing.s1, marginBottom: Spacing.s1 },
+  subtitle: { fontSize: FontSize.base, color: Colors.textSecondary },
   empty: { color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.s10 },
   card: {
     backgroundColor: Colors.surface,

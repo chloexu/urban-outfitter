@@ -6,10 +6,10 @@ type Props = { placeholder: string; onAdd: (tag: string) => void };
 
 export default function AddTagInput({ placeholder, onAdd }: Props) {
   const [text, setText] = useState('');
+  const isEmpty = !text.trim();
   const handle = () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    onAdd(trimmed);
+    if (isEmpty) return;
+    onAdd(text.trim());
     setText('');
   };
   return (
@@ -23,8 +23,8 @@ export default function AddTagInput({ placeholder, onAdd }: Props) {
         onSubmitEditing={handle}
         returnKeyType="done"
       />
-      <Pressable testID="add-tag-button" onPress={handle} style={styles.btn}>
-        <Text style={styles.plus}>+</Text>
+      <Pressable testID="add-tag-button" onPress={handle} style={[styles.btn, isEmpty && styles.btnDisabled]}>
+        <Text style={[styles.plus, isEmpty && styles.plusDisabled]}>+</Text>
       </Pressable>
     </View>
   );
@@ -54,4 +54,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   } as ViewStyle,
   plus: { color: Colors.textPrimary, fontSize: 20 },
+  btnDisabled: { borderColor: Colors.border, backgroundColor: Colors.surface } as ViewStyle,
+  plusDisabled: { color: Colors.textSecondary },
 });

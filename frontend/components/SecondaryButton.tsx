@@ -25,7 +25,6 @@ const styles = StyleSheet.create({
     borderRadius: Radii.md,
     paddingVertical: Spacing.s4,
     paddingHorizontal: Spacing.s6,
-    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,

@@ -78,8 +78,6 @@ export default function ProfileScreen() {
       style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.s5, paddingBottom: insets.bottom + Spacing.s10 }]}
     >
-      <Text style={styles.wordmark}>Urban{'\n'}Outfitter</Text>
-
       <View style={styles.intro}>
         <SectionLabel>STYLE PROFILE</SectionLabel>
         <Text style={styles.title}>Your Preferences</Text>
@@ -126,7 +124,6 @@ export default function ProfileScreen() {
               onPress={() => toggleColorLiked(name)}
             />
           ))}
-          <ColorCircle onPress={() => {}} />
         </View>
       </View>
 
@@ -141,7 +138,6 @@ export default function ProfileScreen() {
               onPress={() => toggleColorAvoided(name)}
             />
           ))}
-          <ColorCircle onPress={() => {}} />
         </View>
       </View>
 
@@ -188,14 +184,8 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   scroll: { backgroundColor: Colors.bg },
   content: { paddingHorizontal: Spacing.s6 },
-  wordmark: {
-    fontFamily: 'Georgia',
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  intro: { marginTop: Spacing.s6, marginBottom: Spacing.s8 },
-  title: { fontSize: FontSize.xl, fontWeight: '600', color: Colors.textPrimary, marginBottom: Spacing.s2 },
+  intro: { marginBottom: Spacing.s6 },
+  title: { fontSize: FontSize.lg, fontWeight: '600', color: Colors.textPrimary, marginTop: Spacing.s1, marginBottom: Spacing.s1 },
   subtitle: { fontSize: FontSize.base, color: Colors.textSecondary },
   section: { marginBottom: Spacing.s8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.s2, marginBottom: Spacing.s3 } as ViewStyle,
